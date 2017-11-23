@@ -8,8 +8,12 @@ export class Square {
     turns: number = 0;
     rollsAgain: boolean = false;
 
+    get type():string {
+        return this.constructor['name'];
+    }
+
     toString(): string{
-        return `${typeof this} index: ${this.index} jumpTo: ${this.jumpTo} turns: ${this.turns} rollsAgain: ${this.rollsAgain}`;
+        return `${this.type} index: ${this.index} jumpTo: ${this.jumpTo} turns: ${this.turns} rollsAgain: ${this.rollsAgain}`;
     }
 }
 
@@ -38,7 +42,7 @@ export class DiceSquare extends Square {
 }
 
 export class TavernSquare extends Square {
-    constructor(jumpTo: number){
+    constructor(){
         super();
         this.turns = 2;
     }
@@ -87,11 +91,22 @@ export default class Board {
             return;
         }
         const fwd = player.dice.roll();
-        const nextPosition = player.currentPosition + fwd;
+        // console.log(`Player ${player.id} rolls a ${fwd} with a ${player.dice.type} `)
+        let nextPosition = player.currentPosition + fwd;
+        const numSquares = this.squares.length - 1;
+        if (nextPosition > numSquares) {
+            const diff = nextPosition - numSquares;
+            nextPosition = numSquares - diff;
+        }
         const nextSquare = this.squares[nextPosition];
+        // console.log(`        to square ${nextSquare.index} ${nextSquare.type}`);
         player.turnsToWait += nextSquare.turns;
         player.currentPosition = nextSquare.jumpTo;
+        // if (nextSquare.jumpTo !== nextSquare.index ) {
+        //     console.log(`        jumps to ${nextSquare.jumpTo}`);
+        // }
         if (nextSquare.rollsAgain) {
+            // console.log(`                 rolls again`);
             this.move(player);
         }
     }
@@ -99,7 +114,7 @@ export default class Board {
     public static buildOcaBoard(): Board {
         const board = new Board();
         const numSquares = 63;
-        for (let i = 0; i < numSquares; i++){
+        for (let i = 0; i <= numSquares; i++){
             const square = new Square();
             square.index = i;
             square.jumpTo = i;
@@ -107,7 +122,7 @@ export default class Board {
         }
         let pos = 59;
         let jump = 5;
-        const numOcaSquares = 14;
+        const numOcaSquares = 13;
         let lastOcaIndex = 63;
         for (let i = 0; i < numOcaSquares; i++ ){
             const square = new OcaSquare(lastOcaIndex);
@@ -116,8 +131,41 @@ export default class Board {
             pos -= jump;
             jump = jump === 5 ? 4 : 5;
             board.squares[square.index] = square;
-            console.log(square.toString());
         }
+
+        let bridge = new BridgeSquare(12);
+        bridge.index = 6;
+        board.squares[bridge.index] = bridge;
+        bridge = new BridgeSquare(6);
+        bridge.index = 12;
+        board.squares[bridge.index] = bridge;
+
+        const tavern = new TavernSquare();
+        tavern.index = 19;
+        board.squares[tavern.index] = tavern;
+
+        let dice = new DiceSquare(53);
+        dice.index = 26;
+        board.squares[dice.index] = dice;
+        dice = new DiceSquare(26);
+        dice.index = 53;
+        board.squares[dice.index] = dice;
+
+        const laberynth = new LaberynthSquare();
+        laberynth.index = 42;
+        board.squares[laberynth.index] = laberynth;
+
+        const jail = new JailSquare();
+        jail.index = 52;
+        board.squares[jail.index] = jail;
+
+        const death = new DeathSquare();
+        death.index = 58;
+        board.squares[death.index] = death;
+
+        // for (let square of board.squares){
+        //     console.log(square.toString());
+        // }
 
         return board;
     }

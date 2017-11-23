@@ -2,6 +2,7 @@
 
 export interface Dice {
     roll(): number;
+    readonly type: string;
 }
 
 export class RandomDice implements Dice {
@@ -11,12 +12,16 @@ export class RandomDice implements Dice {
         this._sides = sides;
     }
 
-    public get sides(): number {
+    get sides(): number {
         return this._sides;
     }
 
-    public roll(): number {
+    roll(): number {
         return Math.floor(Math.random() * this.sides) + 1;
+    }
+
+    get type(): string {
+        return `d${this.sides}`;
     }
 }
 
@@ -27,12 +32,16 @@ export class ConstantDice implements Dice {
         this._steps = steps;
     }
 
-    public get steps(): number {
+    get steps(): number {
         return this._steps;
     }
 
-    public roll(): number {
+    roll(): number {
         return this.steps;
+    }
+
+    get type(): string {
+        return `c${this.steps}`;
     }
 
 }
