@@ -9,6 +9,7 @@ export default class Game {
     isFinished: boolean = false;
 
     numberOfTurns: number = 0;
+    winner: Player;
 
     constructor(players?: Player[]) {
         this.board = Board.buildOcaBoard();
@@ -32,11 +33,14 @@ export default class Game {
         // console.log(`      Turn ${this.numberOfTurns}`);
         for (let player of this.players) {
             this.board.move(player);
-            if (this.board.squares[player.currentPosition] == this.board.winnerSquare) {
-                // console.log(`Player ${player.id} have won!`);
+        }
+
+        for (let player of this.players) {
+            if (player.currentPosition === this.board.winnerSquare.index) {
                 this.isFinished = true;
-                break;
+                this.winner = this.winner ? null : player;
             }
         }
+
     }
 }

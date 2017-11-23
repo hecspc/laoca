@@ -1,5 +1,6 @@
 
 import Player from './player';
+import { isNumber } from 'util';
 
 export class Square {
 
@@ -97,6 +98,7 @@ export default class Board {
         if (nextPosition > numSquares) {
             const diff = nextPosition - numSquares;
             nextPosition = numSquares - diff;
+            // nextPosition = numSquares; // no rebound
         }
         const nextSquare = this.squares[nextPosition];
         // console.log(`        to square ${nextSquare.index} ${nextSquare.type}`);
