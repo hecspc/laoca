@@ -4,21 +4,91 @@ import Player from './player';
 import { ConstantDice, RandomDice } from './dice';
 import { writeFile } from 'fs';
 
-const NUMBER_EPOCHS = 100000; //1E6;
+const NUMBER_EPOCHS = 1E6;
 
 console.log('Starting el juego de la oca');
 
-const sides = [1, 2, 4, 6, 8, 10, 12, 20];
+const sides = [1, 2, 4, 6, 8, 10, 12, 20, 100];
+
+const stats = [];
+const avgTurns = {}
+for (let dP1 = 0; dP1 < sides.length; dP1++){
+    const side = sides[dP1];
+    const st = {
+        sides: side,
+        turns: []
+    };
+    console.log(`Dice with ${side} full sides`);
+    const dice = new RandomDice(side);
+    let max = 0;
+    let modeTurn = 0;
+    let avg = 0;
+    const results = [];
+    for (let i = 0; i < NUMBER_EPOCHS; i++) {
+        const player = new Player(1, dice);
+        const game = new Game([player]);
+        game.run();
+        if (st.turns[game.numberOfTurns]) {
+            st.turns[game.numberOfTurns] += 1;
+        } else {
+            st.turns[game.numberOfTurns] = 1;
+        }
+        if (st.turns[game.numberOfTurns] > max ){
+            modeTurn = game.numberOfTurns;
+            max = st.turns[game.numberOfTurns];
+        }
+        avg += game.numberOfTurns;
+        results.push(game.numberOfTurns);
+    }
+    avg /= NUMBER_EPOCHS;
+    let std = 0;
+    for (let i = 0; i < NUMBER_EPOCHS; i++) {
+        std += (results[i] - avg) * (results[i] - avg);
+    }
+    std /= NUMBER_EPOCHS;
+    avgTurns[side] = {
+        p: max / NUMBER_EPOCHS,
+        mode: modeTurn,
+        avg,
+        std
+    };
+    console.log(`${side}, ${avgTurns[side].mode}, ${avgTurns[side].p}, ${avgTurns[side].avg}, ${avgTurns[side].std}\n`);
+
+    stats.push(st);
+
+    let csv = 'turns, p\n';
+    for (let i = 1; i < st.turns.length; i++){
+        const p = st.turns[i] ? st.turns[i] / NUMBER_EPOCHS : 0;
+        csv += `${i}, ${p}\n`
+    }
+
+    writeFile(`./stats/${dice.type}.csv`, csv, (err) => {
+        if (err) {
+            throw(err);
+        }
+    });
+}
+
+let avgTurnsCSV = "sides, mode, pMode, avg, std \n";
+for (let row in avgTurns){
+    avgTurnsCSV += `${row}, ${avgTurns[row].mode}, ${avgTurns[row].p}, ${avgTurns[row].avg}, ${avgTurns[row].std}\n`;
+}
+writeFile(`./stats/avgturns.csv`, avgTurnsCSV, (err) => {
+    if (err) {
+        throw(err);
+    }
+});
+
 
 const clashes = [];
 
-for (let dP1 = 1; dP1 < 11; dP1++){
+for (let dP1 = 0; dP1 < sides.length; dP1++){
     const sideP1 = sides[dP1];
-    const diceP1 = new ConstantDice(dP1);
-    for (let dP2 = 0; dP2 < sides.length; dP2++) {
+    const diceP1 = new RandomDice(sideP1);
+    for (let dP2 = dP1; dP2 < sides.length; dP2++) {
         const sideP2 = sides[dP2];
         const diceP2 = new RandomDice(sideP2);
-        const diff = dP1 === dP2 ? '' : '';
+        const diff = dP1 === dP2 ? '_' : '';
         const clash:any = { };
         clash[diceP1.type] = 0;
         clash[diceP2.type + diff] = 0;
@@ -43,68 +113,7 @@ for (let dP1 = 1; dP1 < 11; dP1++){
         clash[diceP2.type + diff] /= NUMBER_EPOCHS;
         console.log(clash);
     }
-
-
 }
 
-/*
-const stats = [];
-const avgTurns = {}
-for (let sides = 10; sides <= 10; sides ++){
-    const st = {
-        sides: sides,
-        turns: {
-
-        }
-    };
-    console.log(`Dice with ${sides} full sides`);
-    const dice = new RandomDice(sides);
-    let max = 0;
-    let avgTurn = 0;
-    for (let i = 0; i < NUMBER_EPOCHS; i++) {
-        const player = new Player(1, dice);
-        const game = new Game([player]);
-        game.run();
-        if (st.turns[game.numberOfTurns]) {
-            st.turns[game.numberOfTurns] += 1;
-        } else {
-            st.turns[game.numberOfTurns] = 1;
-        }
-        if (st.turns[game.numberOfTurns] > max ){
-            avgTurn = game.numberOfTurns;
-            max = st.turns[game.numberOfTurns];
-        }
-
-    }
-    avgTurns[sides] = {
-        p: max / NUMBER_EPOCHS,
-        turn: avgTurn
-    };
-    console.log(`${sides}, ${avgTurns[sides].turn}, ${avgTurns[sides].p}\n`)
-
-    stats.push(st);
-    console.log(st);
-    let csv = 'turns, p\n';
-    for (let row in st.turns){
-        csv += `${row}, ${st.turns[row] / NUMBER_EPOCHS}\n`
-    }
-
-    writeFile(`./stats/${dice.type}.csv`, csv, (err) => {
-        if (err) {
-            throw(err);
-        }
-    });
-}
-
-let avgTurnsCSV = "sides, turns, p\n";
-for (let row in avgTurns){
-    avgTurnsCSV += `${row}, ${avgTurns[row].turn}, ${avgTurns[row].p}\n`
-}
-writeFile(`./stats/avgturns.csv`, avgTurnsCSV, (err) => {
-    if (err) {
-        throw(err);
-    }
-});
 
 // console.log(stats);
-*/

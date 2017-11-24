@@ -1,6 +1,5 @@
 
 import Player from './player';
-import { isNumber } from 'util';
 
 export class Square {
 
@@ -100,6 +99,9 @@ export default class Board {
             nextPosition = numSquares - diff;
             // nextPosition = numSquares; // no rebound
         }
+        if (nextPosition < 0){
+            nextPosition *= -1;
+        }
         const nextSquare = this.squares[nextPosition];
         // console.log(`        to square ${nextSquare.index} ${nextSquare.type}`);
         player.turnsToWait += nextSquare.turns;
@@ -107,7 +109,7 @@ export default class Board {
         // if (nextSquare.jumpTo !== nextSquare.index ) {
         //     console.log(`        jumps to ${nextSquare.jumpTo}`);
         // }
-        if (nextSquare.rollsAgain) {
+        if (nextSquare.rollsAgain && player.currentPosition !== this.winnerSquare.index) {
             // console.log(`                 rolls again`);
             this.move(player);
         }
